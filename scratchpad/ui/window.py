@@ -40,7 +40,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
-from gi.repository import Adw, GLib, Gtk  # noqa: E402
+from gi.repository import Adw, GLib, GObject, Gtk  # noqa: E402
 
 from scratchpad import __version__  # noqa: E402
 from scratchpad.attachments import ResolutionState  # noqa: E402
@@ -49,6 +49,7 @@ from scratchpad.ui.capture import CaptureController  # noqa: E402
 from scratchpad.ui.commands import Command, CommandRegistry  # noqa: E402
 from scratchpad.ui.diffview import DiffView  # noqa: E402
 from scratchpad.ui.editor import ScratchpadEditor  # noqa: E402
+from scratchpad.ui.layout import NaturalClamp  # noqa: E402
 from scratchpad.ui.palette import CommandPalette  # noqa: E402
 from scratchpad.ui.preview import PreviewPane  # noqa: E402
 from scratchpad.ui.textview_extras import LineNumberedTextView  # noqa: E402
@@ -163,7 +164,10 @@ class ScratchpadWindow(Adw.ApplicationWindow):
         toolbar.add_top_bar(self.banner)
 
         # editor | previews
+        # Homogeneous: the two panes always split the sidebar 50/50, whatever
+        # they show.  Each pane clamps its own natural size (preview.py).
         self.sidebar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        self.sidebar.set_homogeneous(True)
         self.sidebar.set_size_request(280, -1)
         self.sidebar.set_margin_start(6)
         self.sidebar.set_margin_end(6)
@@ -188,7 +192,13 @@ class ScratchpadWindow(Adw.ApplicationWindow):
 
         self.main_paned = Gtk.Paned(orientation=Gtk.Orientation.VERTICAL)
         self.main_paned.set_start_child(self.top_paned)
-        self.main_paned.set_end_child(self._build_history_panel())
+        # Clamped so that showing the panel divides the current window height
+        # instead of growing the window to the panel's natural size.
+        self.history_container = NaturalClamp(self._build_history_panel())
+        self.history_panel.bind_property(
+            "visible", self.history_container, "visible", GObject.BindingFlags.SYNC_CREATE
+        )
+        self.main_paned.set_end_child(self.history_container)
         self.main_paned.set_resize_start_child(True)
         self.main_paned.set_resize_end_child(True)
         self.main_paned.set_shrink_start_child(False)

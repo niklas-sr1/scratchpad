@@ -35,6 +35,8 @@ gi.require_version("Pango", "1.0")
 
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 
+from scratchpad.ui.layout import NaturalClamp  # noqa: E402
+
 from scratchpad.ui.textview_extras import LineNumberedTextView  # noqa: E402
 
 if TYPE_CHECKING:  # pragma: no cover - typing only, never imported at runtime
@@ -150,7 +152,12 @@ class PreviewPane(Gtk.Box):
         self.stack.set_vhomogeneous(False)
         self.stack.set_vexpand(True)
         self.stack.set_hexpand(True)
-        self.append(self.stack)
+        # The pane must never ask the window for room: a large image or a long
+        # log is scaled/scrolled into whatever the sidebar gives us (see layout.py).
+        self._clamp = NaturalClamp(self.stack)
+        self._clamp.set_vexpand(True)
+        self._clamp.set_hexpand(True)
+        self.append(self._clamp)
 
         self.stack.add_named(self._build_blank_page(), PAGE_BLANK)
         self.stack.add_named(self._build_image_page(), PAGE_IMAGE)
