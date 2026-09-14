@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Scratchpad
+Comment=Persistent plain-text scratchpad with exact history and attachment tokens
+Exec=scratchpad
+Icon=accessories-text-editor
+Terminal=false
+Categories=Utility;TextEditor;
+StartupNotify=true
+StartupWMClass=dev.scratchpad.Scratchpad
+Keywords=scratch;notes;clipboard;temporary;
